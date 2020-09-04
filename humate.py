@@ -10,14 +10,14 @@ class Humate:
     barcode: str
     location: str
 
-    def __init__(self, **kwargs):
-        self.units = kwargs.get("units", 0)
-        self.expiration = kwargs.get("expiration", 0)
-        self.received = kwargs.get("received", 0)
-        self.used = kwargs.get("used", 0)
-        self.reason = kwargs.get("reason", "")
-        self.barcode = kwargs.get("barcode", "")
-        self.location = kwargs.get("location", "")
+    def __init__(self, metadata: dict):
+        self.units = metadata.get("units", 0)
+        self.expiration = metadata.get("expiration", 0)
+        self.received = metadata.get("received", 0)
+        self.used = metadata.get("used", 0)
+        self.reason = metadata.get("reason", "")
+        self.barcode = metadata.get("barcode", "")
+        self.location = metadata.get("location", "")
 
     def __repr__(self):
         return str(self)
