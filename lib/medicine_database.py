@@ -1,12 +1,13 @@
-import pyrebase
-from humate import Humate
-from datetime import date, datetime
-from pathlib import Path
 import json
+import pyrebase
 from typing import List
-from lib import UnitsRange
+from pathlib import Path
+from datetime import date, datetime
 
-class MedicineManager:
+from lib.humate import Humate
+from lib.utils import UnitsRange
+
+class MedicineDatabase:
     def __init__(self, weight=130):
         config_path = Path(__file__).parent / "firebase_config.json"
         config = {}
@@ -26,15 +27,21 @@ class MedicineManager:
         medicines = self.db.child("medicine").order_by_child("expiration").start_at(today + 1).get()
         return self.__convert_to_medicine(medicines)
 
-    def get_dose(self, units_per_kg: int) -> List[Humate]:
+    def get_by_dose(self, units_per_kg: int) -> List[Humate]:
         self.__update_cache()
         units_range = self.__get_valid_range(units_per_kg)
         
         print("Finding medicine in the range:", units_range)
         
-        medicine = [Humate(v) for v in self.cache["medicine"].values()]
+        medicine = [Humate(**v) for v in self.cache["medicine"].values()]
         medicine.sort(key=lambda humate: (-humate.units, humate.expiration))
         return self.__get(units_range, medicine, [])
+
+    def get_by_barcode(self, barcode: str) -> Humate:
+        self.__update_cache()
+        if barcode not in self.cache["medicine"]:
+            return None
+        return Humate(**self.cache["medicine"][barcode])
 
     def add(self, humate: Humate):
         self.db.child("medicine").child(humate.barcode).set(humate.dict())
@@ -55,14 +62,14 @@ class MedicineManager:
         for i in range(len(medicine)):
             humate = medicine[i]
             new_medicine = medicine[:i] + medicine[i+1:]
-            recurse = self.__get_helper(units_range - humate.units, new_medicine, res + [humate])
+            recurse = self.__get(units_range - humate.units, new_medicine, res + [humate])
             if len(recurse):
                 return recurse
         
         return []
 
     def __get_valid_range(self, units_per_kg: int) -> UnitsRange:
-        return UnitsRange(*[int((1 + 0.15*var)*dose*self.weight_kg) for var in [-1, 1]])
+        return UnitsRange(*[int((1 + 0.15*var)*units_per_kg*self.weight_kg) for var in [-1, 1]])
 
     def __update_timestamp(self):
         self.db.child("last_updated").set(datetime.timestamp(datetime.utcnow()))
@@ -83,52 +90,7 @@ class MedicineManager:
     def __convert_to_medicine(self, db_data) -> List[Humate]:
         if db_data.each() is None:
             return []
-        return [Humate(med.val()) for med in db_data]
+        return [Humate(**med.val()) for med in db_data]
 
     def __current_ordinal_date(self) -> int:
         return datetime.utcnow().date().toordinal()
-
-
-def reset():
-    mm = MedicineManager()
-    for med in mm.db.child("medicine").get().each():
-        mm.db.child("medicine").child(med.key()).remove()
-    test_data = [
-        {
-            "units": 1860, 
-            "expiration": date(2020, 12, 31).toordinal(), 
-            "received": date(2020, 8, 15).toordinal(), 
-            "used": date(2020, 9, 3).toordinal(), 
-            "reason": "prophy",
-            "barcode": "132412341234"
-        },
-        {
-            "units": 1860, 
-            "expiration": date(2020, 6, 30).toordinal(), 
-            "received": date(2020, 8, 15).toordinal(), 
-            "barcode": "453452345"
-        },
-        {
-            "units": 440, 
-            "expiration": date(2020, 5, 30).toordinal(), 
-            "received": date(2020, 8, 15).toordinal(), 
-            "used": date(2020, 9, 3).toordinal(), 
-            "reason": "prophy",
-            "barcode": "12341454"
-        },
-        {
-            "units": 980, 
-            "expiration": date(2020, 1, 30).toordinal(), 
-            "received": date(2020, 8, 15).toordinal(), 
-            "barcode": "452351234"
-        },
-    ]
-    for t in test_data:
-        mm.add(Humate(**t))
-# reset()
-
-mm = MedicineManager()
-# print(mm.get())
-# print(mm.get_available())
-print(mm.get_dose(60))
-# mm.add("test", x)
