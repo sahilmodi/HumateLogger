@@ -21,7 +21,7 @@ if __name__ == "__main__":
     print("")
     medicine = database.get_by_dose(args.dose)
     if not len(medicine):
-        print("ERROR: Not enough medicine available.")
+        print("Error: Could not find a valid medicine combination.")
         exit()
     else:
         total = 0

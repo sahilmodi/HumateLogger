@@ -1,12 +1,17 @@
 class UnitsRange:
     min: int
     max: int
-    def __init__(self, min_val, max_val):
-        self.min = min_val
-        self.max = max_val
+    target: int
+    tolerance = 0.10
+    def __init__(self, target_units: int):
+        self.min = int((1 - self.tolerance) * target_units)
+        self.max = int((1 + self.tolerance) * target_units)
  
     def __add__(self, other):
-        return UnitsRange(self.min + other, self.max + other)
+        new = UnitsRange(0)
+        new.min = self.min + other
+        new.max = self.max + other
+        return new
     
     def __sub__(self, other):
         return self.__add__(-other)
@@ -16,3 +21,5 @@ class UnitsRange:
 
     def __repr__(self):
         return str(self)
+
+POUNDS_TO_KG_RATIO = 2.204
