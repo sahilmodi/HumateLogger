@@ -5,7 +5,6 @@ from lib.medicine_database import MedicineDatabase
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--dose", "-d", required=True, type=int, help="Units per kilogram required")
-ap.add_argument("--reason", "-r", type=str, default="prophy", help="Reason if medicine is being used")
 args = ap.parse_args()
 
 
@@ -17,22 +16,20 @@ def get_input(query, valid_responses=[]):
     return response
 
 
-def get(database: MedicineDatabase, dose: int):
+if __name__ == "__main__":
+    database = MedicineDatabase()
     print("")
-    medicine = database.get_by_dose(dose)
+    medicine = database.get_by_dose(args.dose)
     if not len(medicine):
         print("ERROR: Not enough medicine available.")
+        exit()
     else:
         total = 0
         for humate in medicine:
             print("*", humate)
             total += humate.units
-        print(str(total), "units total")
-    return medicine
-
-if __name__ == "__main__":
-    database = MedicineDatabase()
-    medicine = get(database, args.dose)
+        print(str(total), "units total.\n")
+   
     if get_input("Use this medicine? (y/n)", ["y", "yes"]):
         reason = get_input("Please enter a reason. Leave blank to use 'prophy'")
         if not reason:
@@ -45,5 +42,7 @@ if __name__ == "__main__":
         for humate in medicine:
             print("* Using", humate, "for", reason, "on", datetime.fromordinal(date).date())
             database.use(humate, reason, date)
+        database.update_local_db(True)
+        
     print("Finished.")
     

@@ -1,0 +1,7 @@
+{
+    "databaseURL": "https://humate-logger.firebaseio.com/",
+    "serviceAccount": "lib/humate-logger-firebase-adminsdk-6i22g-d194e91263.json",
+    "apiKey": "",
+    "authDomain": "",
+    "storageBucket": ""
+}

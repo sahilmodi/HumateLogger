@@ -23,10 +23,14 @@ class Humate:
         return str(self)
     
     def __str__(self):
+        barcode = self.barcode
+        if len(barcode) > 23:
+            barcode = self.barcode[:10] + "..." + self.barcode[-10:]
         res = ", ".join([
             "units: {}".format(self.units),
             "expiration: {}".format(datetime.fromordinal(self.expiration).date()),
-            "barcode: {}".format(self.barcode)
+            "received : {}".format(datetime.fromordinal(self.received).date()),
+            "barcode: {}".format(barcode)
         ])
         return "{" + res + "}"
     
