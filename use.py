@@ -5,6 +5,7 @@ from lib.medicine_database import MedicineDatabase
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--dose", "-d", required=True, type=int, help="Units per kilogram required")
+ap.add_argument("--location", "-l", type=str, default="school", help="Where the medicine is located")
 args = ap.parse_args()
 
 
@@ -19,7 +20,7 @@ def get_input(query, valid_responses=[]):
 if __name__ == "__main__":
     database = MedicineDatabase()
     print("")
-    medicine = database.get_by_dose(args.dose)
+    medicine = database.get_by_dose(args.dose, args.location)
     if not len(medicine):
         print("Error: Could not find a valid medicine combination.")
         exit()

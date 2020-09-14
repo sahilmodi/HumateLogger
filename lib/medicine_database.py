@@ -27,12 +27,13 @@ class MedicineDatabase:
         self.update_local_db()
         return [Humate(**self.cache["medicine"][barcode]) for barcode in self.cache["medicine"]]
 
-    def get_by_dose(self, units_per_kg: int) -> List[Humate]:
+    def get_by_dose(self, units_per_kg: int, location: str) -> List[Humate]:
         self.update_local_db()
         units_range = UnitsRange(int(units_per_kg * self.weight_kg))
         
         print("Finding medicine in the range:", units_range)
-        medicine = [Humate(**v) for v in self.cache["medicine"].values()]
+        medicine = list(filter(lambda h: h.location.lower() == location.lower(), [Humate(**v) for v in self.cache["medicine"].values()]))
+        
         return optimal_dispension(units_range, medicine)
 
     def get_by_barcode(self, barcode: str) -> Humate:
@@ -68,12 +69,6 @@ class MedicineDatabase:
         self.__update_timestamp()
         self.weight_kg = weight_lb / POUNDS_TO_KG_RATIO
 
-    def _get_available_remote(self) -> List[Humate]:
-        medicines = self.db.child("medicine").order_by_child("used").equal_to(0).get()
-        if medicines.each() is None:
-            return []
-        return [Humate(**med.val()) for med in medicines]
-
     def update_local_db(self, mute=False):
         last_updated = self.db.child("last_updated").get().val()
         self.cache = {}
@@ -82,23 +77,30 @@ class MedicineDatabase:
                 self.cache = json.load(f)
         if self.cache.get("last_updated", -1) != last_updated:
             self.cache["last_updated"] = last_updated
-            self.cache["medicine"] = {med.barcode: med.dict() for med in self._get_available_remote()}
+            self.cache["medicine"] = {med.barcode: med.dict() for med in self.__get_available_remote()}
             with open(self.cache_path, "w") as f:
                 json.dump(self.cache, f, indent=2)
             if not mute:
                 print("Updated local database to latest version:", last_updated)
 
+    def __get_available_remote(self) -> List[Humate]:
+        medicines = self.db.child("medicine").order_by_child("used").equal_to(0).get()
+        if medicines.each() is None:
+            return []
+        return [Humate(**med.val()) for med in medicines]
+
     def __update_timestamp(self):
         self.db.child("last_updated").set(datetime.timestamp(datetime.utcnow()))
 
     def __update_expired(self):
-        last_updated = self.db.child("last_updated").get().val()
-        if (datetime.utcnow() - datetime.fromtimestamp(last_updated)).days < 2:
+        last_check = self.db.child("last_expired_check").get().val()
+        utc_now = datetime.utcnow()
+        if (utc_now - datetime.fromtimestamp(last_check)).days < 2:
             return
         print("Checking for expired medicine...")
         curr_date = self.__current_ordinal_date()
         any_expired = False
-        non_expired = self._get_available_remote()
+        non_expired = self.__get_available_remote()
         for humate in non_expired:
             if humate.expiration < curr_date:
                 humate.used = 1
@@ -106,6 +108,7 @@ class MedicineDatabase:
                 self.db.child("medicine").child(humate.barcode).update(humate.dict())
                 any_expired = True
                 print("* {}".format(humate))
+        self.db.child("last_expired_check").set(datetime.timestamp(utc_now))
         if any_expired:
             self.__update_timestamp()
         self.update_local_db()
