@@ -19,28 +19,35 @@ class MedicineDatabase:
         self.db = firebase.database()
         
         self.cache_path = Path(__file__).parent / "medicine.json"
+        self.cache = {}
 
         self.weight_kg = self.db.child("weight_lb").get().val() / POUNDS_TO_KG_RATIO
         self.__update_expired()
 
     def get_available(self) -> List[Humate]:
         self.update_local_db()
-        return [Humate(**self.cache["medicine"][barcode]) for barcode in self.cache["medicine"]]
+        return [Humate(**v) for v in self.cache["medicine"].values()]
+
+    def get_by_filters(self, filters: dict, quantity: int):
+        self.update_local_db()
+        medicine = []
+        for humate_json in self.cache["medicine"].values():
+            valid = True
+            for filter_name, filter_value in filters.items():
+                if humate_json[filter_name] != filter_value:
+                    valid = False
+                    break
+            if valid:
+                medicine.append(Humate(**humate_json))
+            if len(medicine) == quantity:
+                break
+        return medicine
 
     def get_by_dose(self, units_per_kg: int, location: str) -> List[Humate]:
-        self.update_local_db()
         units_range = UnitsRange(int(units_per_kg * self.weight_kg))
-        
         print("Finding medicine in the range:", units_range)
-        medicine = list(filter(lambda h: h.location.lower() == location.lower(), [Humate(**v) for v in self.cache["medicine"].values()]))
-        
+        medicine = self.get_by_filters({"location": location}, 1)
         return optimal_dispension(units_range, medicine)
-
-    def get_by_barcode(self, barcode: str) -> Humate:
-        self.update_local_db()
-        if barcode not in self.cache["medicine"]:
-            return None
-        return Humate(**self.cache["medicine"][barcode])
 
     def move_available(self, src: str, dest: str) -> List[Humate]:
         moved = []
