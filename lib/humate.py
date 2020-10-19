@@ -29,8 +29,9 @@ class Humate:
         res = ", ".join([
             "units: {}".format(self.units),
             "expiration: {}".format(datetime.fromordinal(self.expiration).date()),
+            "location: {}".format(self.location),
             "received : {}".format(datetime.fromordinal(self.received).date()),
-            "barcode: {}".format(barcode)
+            "barcode: {}".format(barcode),
         ])
         return "{" + res + "}"
     
