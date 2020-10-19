@@ -14,6 +14,7 @@ class MedicineDatabase:
         config = {}
         with open(Path(__file__).parent / "firebase_config.json") as f:
             config = json.load(f)
+        config["serviceAccount"] = str(Path(__file__).parent / "humate-logger-firebase-adminsdk-6i22g-d194e91263.json")
         firebase = pyrebase.initialize_app(config)
         firebase.auth()
         self.db = firebase.database()
