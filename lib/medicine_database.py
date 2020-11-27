@@ -46,8 +46,8 @@ class MedicineDatabase:
 
     def get_by_dose(self, units_per_kg: int, location: str) -> List[Humate]:
         units_range = UnitsRange(int(units_per_kg * self.weight_kg))
-        print("Finding medicine in the range:", units_range)
-        medicine = self.get_by_filters({"location": location}, 1)
+        print("Finding medicine in the range:", units_range, "at", location)
+        medicine = self.get_by_filters({"location": location}, -1)
         return optimal_dispension(units_range, medicine)
 
     def move_available(self, src: str, dest: str) -> List[Humate]:
