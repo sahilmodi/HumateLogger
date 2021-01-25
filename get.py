@@ -16,10 +16,10 @@ def use_ui(medicine):
         reason = get_input("Please enter a reason. Leave blank to use 'prophy'")
         if not reason:
             reason = "prophy"
-        date_str = get_input("Please enter in a date in mm/dd/yy format. Leave empty to use today")
+        date_str = get_input("Please enter in a date in mm/dd/yyyy format. Leave empty to use today")
         date = datetime.now().toordinal()
         if date_str:
-            date = datetime.strptime(date_str, "%m/%d/%y").date().toordinal()
+            date = datetime.strptime(date_str, "%m/%d/%yy").date().toordinal()
         print("Updating...")
         for humate in medicine:
             print("* Using", humate, "for", reason, "on", datetime.fromordinal(date).date())
