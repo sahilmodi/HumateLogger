@@ -1,8 +1,9 @@
 import argparse
 from datetime import datetime
 
-from lib.medicine_database import MedicineDatabase
+from lib import MedicineDatabase
 from lib.ui import get_input
+from lib.filters import *
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--units", "-u", type=int, default=0, help="Units per kilogram required")
@@ -30,14 +31,15 @@ def use_ui(medicine):
 if __name__ == "__main__":
     database = MedicineDatabase()
     print("")
-    filters = {"location": args.location}
+    humate_filter = HumateFilter()
+    humate_filter.location = StringFilter(args.location)
     if args.expiration:
-        filters["expiration"] = datetime.strptime(args.expiration, "%m/%d/%y").date().toordinal()
+        humate_filter.expiration = RangeFilter(datetime.strptime(args.expiration, "%m/%d/%y").date().toordinal())
     if args.units:
-        filters["units"] = args.units
-    medicine = database.get_by_filters(filters, args.quantity)
+        humate_filter.units = RangeFilter(args.units)
+    medicine = database.get_by_filters(humate_filter, args.quantity)
     if len(medicine) != args.quantity:
-        print("Error: Only found {} boxes of medicine.".format(len(medicine)))
+        print("[ERROR] Only found {} boxes of medicine.".format(len(medicine)))
         exit()
     else:
         total = 0

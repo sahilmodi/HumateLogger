@@ -1,13 +1,13 @@
 import json
 import pyrebase
-import firebase_admin
 from typing import List
 from pathlib import Path
-from datetime import date, datetime
+from datetime import datetime
 
-from lib.humate import Humate
-from lib.utils import UnitsRange, POUNDS_TO_KG_RATIO
-from lib.dosage_dispension import optimal_dispension
+from .humate import Humate
+from .utils import UnitsRange, POUNDS_TO_KG_RATIO
+from .dosage_dispension import optimal_dispension
+from .filters import HumateFilter
 
 class MedicineDatabase:
     def __init__(self):
@@ -29,19 +29,11 @@ class MedicineDatabase:
         self.update_local_db()
         return [Humate(**v) for v in self.cache["medicine"].values()]
 
-    def get_by_filters(self, filters: dict, quantity: int):
+    def get_by_filters(self, humate_filter: HumateFilter, quantity: int):
         self.update_local_db()
-        medicine = []
-        for humate_json in self.cache["medicine"].values():
-            valid = True
-            for filter_name, filter_value in filters.items():
-                if humate_json[filter_name] != filter_value:
-                    valid = False
-                    break
-            if valid:
-                medicine.append(Humate(**humate_json))
-            if len(medicine) == quantity:
-                break
+        medicine = list(filter(lambda x: humate_filter.check(x), [h for h in self.get_available()]))
+        if len(medicine) > quantity:
+            return medicine[:quantity]
         return medicine
 
     def get_by_dose(self, units_per_kg: int, location: str) -> List[Humate]:
@@ -50,26 +42,20 @@ class MedicineDatabase:
         medicine = self.get_by_filters({"location": location}, -1)
         return optimal_dispension(units_range, medicine)
 
-    def move_available(self, src: str, dest: str) -> List[Humate]:
-        moved = []
-        for humate in self.get_available():
-            if humate.location == src:
-                humate.location = dest
-                self.db.child("medicine").child(humate.barcode).update(humate.dict())
-                moved.append(humate)
-
-        if len(moved):
-            self.__update_timestamp()
-        return moved
+    def move(self, humate: Humate, new_location) -> bool:
+        humate.location = new_location
+        self.db.child("medicine").child(humate.barcode).update(humate.dict())
+        self.__update_timestamp()
+        return True
 
     def add(self, humate: Humate):
         self.db.child("medicine").child(humate.barcode).set(humate.dict())
         self.__update_timestamp()
 
-    def use(self, medicine: Humate, reason, date=0):
-        medicine.used = date if date else self.__current_ordinal_date()
-        medicine.reason = reason
-        self.db.child("medicine").child(medicine.barcode).update(medicine.dict())
+    def use(self, humate: Humate, reason, date=0):
+        humate.used = date if date else self.__current_ordinal_date()
+        humate.reason = reason
+        self.db.child("medicine").child(humate.barcode).update(humate.dict())
         self.__update_timestamp()
 
     def set_weight_lb(self, weight_lb: float):

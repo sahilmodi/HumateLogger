@@ -1,8 +1,8 @@
 import numpy as np
 from typing import List
 
-from lib.humate import Humate
-from lib.utils import UnitsRange
+from .humate import Humate
+from .utils import UnitsRange
 
 buckets = [0, 600, 1200, 2000, 4000]
 

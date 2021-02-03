@@ -1,7 +1,7 @@
 import argparse
 from datetime import datetime
 
-from lib.medicine_database import MedicineDatabase
+from lib import MedicineDatabase
 from lib.ui import get_input
 
 ap = argparse.ArgumentParser()
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     print("")
     medicine = database.get_by_dose(args.dose, args.location)
     if not len(medicine):
-        print("Error: Could not find a valid medicine combination.")
+        print("[ERROR] Could not find a valid medicine combination.")
         exit()
     else:
         total = 0

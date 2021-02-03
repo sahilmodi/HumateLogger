@@ -1,7 +1,7 @@
 import argparse
 from datetime import datetime
 
-from lib.medicine_database import MedicineDatabase
+from lib import MedicineDatabase
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--dose", "-d", required=True, type=int, help="Units per kilogram required.")
