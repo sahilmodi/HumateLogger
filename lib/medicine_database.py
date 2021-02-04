@@ -1,4 +1,5 @@
 import json
+from lib.filters import humate_filter
 import pyrebase
 from typing import List
 from pathlib import Path
@@ -25,21 +26,30 @@ class MedicineDatabase:
         self.weight_kg = self.db.child("weight_lb").get().val() / POUNDS_TO_KG_RATIO
         self.__update_expired()
 
+    def get_all(self) -> List[Humate]:
+        medicines = self.db.child("medicine").order_by_child("used").get()
+        if medicines.each() is None:
+            return []
+        return [Humate(**med.val()) for med in medicines]
+
     def get_available(self) -> List[Humate]:
         self.update_local_db()
         return [Humate(**v) for v in self.cache["medicine"].values()]
 
-    def get_by_filters(self, humate_filter: HumateFilter, quantity: int):
+    def get_by_filters(self, humate_filter: HumateFilter, quantity=-1, get_all=False):
         self.update_local_db()
-        medicine = list(filter(lambda x: humate_filter.check(x), [h for h in self.get_available()]))
-        if len(medicine) > quantity:
+        get_func = self.get_all if get_all else self.get_available
+        medicine = list(filter(lambda x: humate_filter.check(x), [h for h in get_func()]))
+        if quantity > 0 and len(medicine) > quantity:
             return medicine[:quantity]
         return medicine
 
     def get_by_dose(self, units_per_kg: int, location: str) -> List[Humate]:
         units_range = UnitsRange(int(units_per_kg * self.weight_kg))
         print("Finding medicine in the range:", units_range, "at", location)
-        medicine = self.get_by_filters({"location": location}, -1)
+        humate_filter = HumateFilter()
+        humate_filter.location = location
+        medicine = self.get_by_filters(humate_filter)
         return optimal_dispension(units_range, medicine)
 
     def move(self, humate: Humate, new_location) -> bool:
