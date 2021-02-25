@@ -20,7 +20,11 @@ def print_usage(start_date, end_date):
     humate_filter.used = RangeFilter(start_date, end_date)
     boxes = database.get_by_filters(humate_filter, get_all=True)
 
-    print("- Have used a total of", len(boxes), "boxes of medicine.\n")
+    print("Have used a total of", 
+            len(boxes), 
+            "boxes of medicine between", 
+            datetime.fromordinal(start_date).date(), 
+            "to", datetime.fromordinal(end_date).date())
     location_map = defaultdict(list)
     for box in boxes:
         location_map[box.location].append(box)

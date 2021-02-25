@@ -28,7 +28,6 @@ def save_availablity(output_path="availability.png"):
         labels = [x[0] for x in counts]
         str_labels = [str(l) for l in labels]
         freqs = [x[1] for x in counts]
-        print(freqs)
 
         axes[i].bar(str_labels, freqs)
         axes[i].set_title("Humate-P Boxes at " + location)
@@ -44,6 +43,5 @@ def save_availablity(output_path="availability.png"):
                     ha='center', va='bottom')
 
     fig.savefig(output_path, bbox_inches="tight")
-    print()
-    print("- Saved to", output_path)
+    print("- Saved to", output_path, "\n")
 
