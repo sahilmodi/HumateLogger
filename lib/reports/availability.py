@@ -43,5 +43,8 @@ def save_availablity(output_path="availability.png"):
                     ha='center', va='bottom')
 
     fig.savefig(output_path, bbox_inches="tight")
+    plt.close()
     print("- Saved to", output_path, "\n")
-
+    plt.figure()
+    plt.imshow(plt.imread(output_path))
+    plt.show()
