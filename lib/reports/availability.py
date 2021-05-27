@@ -14,13 +14,15 @@ def save_availablity(output_path="availability.png"):
         boxes_by_location[box.location].append(box)
 
     n = len(boxes_by_location.keys())
-    fig, axes = plt.subplots(1, 2, dpi=600, figsize=(12, 6))
+    fig, axes = plt.subplots(1, n, dpi=600, figsize=(12, 6))
 
     for i, location in enumerate(boxes_by_location.keys()):
         print(f"=== {location} ===")
         units = defaultdict(list)
         for box in boxes_by_location[location]:
             units[box.units].append(box)
+        for unit in sorted(units.keys()):
+            print(f"\t* {unit:04d}: {len(units[unit]):02d} boxes")
         print("- Found", len(boxes_by_location[location]), "boxes at", location)
         
         counts = {unit:len(boxes) for unit, boxes in units.items()}
