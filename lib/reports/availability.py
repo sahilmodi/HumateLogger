@@ -15,6 +15,8 @@ def save_availablity(output_path="availability.png"):
 
     n = len(boxes_by_location.keys())
     fig, axes = plt.subplots(1, n, dpi=600, figsize=(12, 6))
+    if n == 1:
+        axes = [axes]
 
     for i, location in enumerate(boxes_by_location.keys()):
         print(f"=== {location} ===")
